@@ -1,32 +1,43 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LoginPage } from './pages/LoginPage';
+import { Layout } from './components/layout/Layout';
+import { TeachersPage } from './pages/TeachersPage';
+import { AreasPage } from './pages/AreasPage';
+import { SedesPage } from './pages/SedesPage';
+import { TeacherClassesPage } from './pages/TeacherClassesPage';
 
 const Home: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold text-gray-800">
-          Bienvenido, {user?.firstName} ({user?.role})
-        </h1>
-        <button onClick={logout} className="text-red-600 hover:underline">
-          Cerrar sesión
-        </button>
+    <div>
+      <h1 className="text-2xl font-bold text-gray-800 mb-4">
+        Bienvenido, {user?.firstName} 👋
+      </h1>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="font-semibold text-gray-700">👨‍🏫 Docentes</h2>
+          <p className="text-sm text-gray-500 mt-1">Gestiona el registro de docentes</p>
+        </div>
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="font-semibold text-gray-700">🗓️ Clases</h2>
+          <p className="text-sm text-gray-500 mt-1">Asigna clases: docente + curso + sede + día</p>
+        </div>
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="font-semibold text-gray-700">✅ Fase 2 completa</h2>
+          <p className="text-sm text-gray-500 mt-1">Siguiente: Asistencia diaria (Fase 3)</p>
+        </div>
       </div>
-      <p className="text-gray-600">
-        ✅ Fase 1 completada. En la Fase 2 construiremos los CRUDs de Docentes, Áreas, Cursos y Sedes.
-      </p>
     </div>
   );
 };
 
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const ProtectedRoute: React.FC = () => {
   const { user, isLoading } = useAuth();
   if (isLoading) return <div className="min-h-screen flex items-center justify-center">Cargando...</div>;
   if (!user) return <Navigate to="/login" replace />;
-  return <>{children}</>;
+  return <Layout />;
 };
 
 const App: React.FC = () => (
@@ -34,14 +45,13 @@ const App: React.FC = () => (
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <Home />
-            </ProtectedRoute>
-          }
-        />
+        <Route element={<ProtectedRoute />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/teachers" element={<TeachersPage />} />
+          <Route path="/areas" element={<AreasPage />} />
+          <Route path="/sedes" element={<SedesPage />} />
+          <Route path="/classes" element={<TeacherClassesPage />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   </AuthProvider>
