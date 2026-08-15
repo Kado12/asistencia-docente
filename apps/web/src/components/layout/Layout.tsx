@@ -3,13 +3,14 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 const menu = [
-  { path: '/', label: '🏠 Inicio' },
-  { path: '/teachers', label: '👨‍ Docentes' },
-  { path: '/areas', label: '📚 Áreas y Cursos' },
+  { path: '/', label: '🏠 Dashboard' },
   { path: '/sedes', label: '🏫 Sedes y Salones' },
+  { path: '/areas', label: '📚 Áreas y Cursos' },
+  { path: '/teachers', label: '👨‍ Docentes' },
   { path: '/classes', label: '🗓️ Clases Asignadas' },
   { path: '/attendance/daily', label: '✅ Asistencia Diaria' },
   { path: '/attendance/weekly', label: '📊 Vista Semanal' },
+  { path: '/validation', label: '🛡️ Validación' },
   { path: '/reports', label: '📑 Consolidados' },
 ];
 

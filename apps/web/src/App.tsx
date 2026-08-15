@@ -10,31 +10,8 @@ import { TeacherClassesPage } from './pages/TeacherClassesPage';
 import { DailyAttendancePage } from './pages/DailyAttendancePage';
 import { WeeklyViewPage } from './pages/WeeklyViewPage';
 import { ReportsPage } from './pages/ReportsPage';
-
-const Home: React.FC = () => {
-  const { user } = useAuth();
-  return (
-    <div>
-      <h1 className="text-2xl font-bold text-gray-800 mb-4">
-        Bienvenido, {user?.firstName} 👋
-      </h1>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="font-semibold text-gray-700">👨‍🏫 Docentes</h2>
-          <p className="text-sm text-gray-500 mt-1">Gestiona el registro de docentes</p>
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="font-semibold text-gray-700">🗓️ Clases</h2>
-          <p className="text-sm text-gray-500 mt-1">Asigna clases: docente + curso + sede + día</p>
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="font-semibold text-gray-700">✅ Fase 2 completa</h2>
-          <p className="text-sm text-gray-500 mt-1">Siguiente: Asistencia diaria (Fase 3)</p>
-        </div>
-      </div>
-    </div>
-  );
-};
+import { DashboardPage } from './pages/DashboardPage';
+import { ValidationPage } from './pages/ValidationPage';
 
 const ProtectedRoute: React.FC = () => {
   const { user, isLoading } = useAuth();
@@ -49,13 +26,14 @@ const App: React.FC = () => (
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route element={<ProtectedRoute />}>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<DashboardPage />} />
           <Route path="/teachers" element={<TeachersPage />} />
           <Route path="/areas" element={<AreasPage />} />
           <Route path="/sedes" element={<SedesPage />} />
           <Route path="/classes" element={<TeacherClassesPage />} />
           <Route path="/attendance/daily" element={<DailyAttendancePage />} />
           <Route path="/attendance/weekly" element={<WeeklyViewPage />} />
+          <Route path="/validation" element={<ValidationPage />} />
           <Route path="/reports" element={<ReportsPage />} />
         </Route>
       </Routes>
