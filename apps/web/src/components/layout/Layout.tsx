@@ -10,6 +10,7 @@ const menu = [
   { path: '/classes', label: '🗓️ Clases Asignadas' },
   { path: '/attendance/daily', label: '✅ Asistencia Diaria' },
   { path: '/attendance/weekly', label: '📊 Vista Semanal' },
+  { path: '/reports', label: '📑 Consolidados' },
 ];
 
 export const Layout: React.FC = () => {
