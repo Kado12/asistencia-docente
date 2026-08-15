@@ -1,0 +1,19 @@
+{
+  "name": "control-asistencia-docente",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "api:dev": "pnpm --filter api run start:dev",
+    "web:dev": "pnpm --filter web run dev",
+    "db:migrate": "pnpm --filter @control/database run migrate",
+    "db:generate": "pnpm --filter @control/database run generate",
+    "db:seed": "pnpm --filter @control/database run seed",
+    "db:studio": "pnpm --filter @control/database run studio"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.0"
+  },
+  "packageManager": "pnpm@9.15.0"
+}

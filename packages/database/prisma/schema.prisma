@@ -1,0 +1,179 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== ENUMS ====================
+
+enum Role {
+  ADMIN        // Tú: registras asistencia
+  COORDINADOR  // Valida semanas
+}
+
+enum AttendanceStatus {
+  PRESENT // Asistió
+  ABSENT  // Falta (F)
+}
+
+enum ValidationStatus {
+  PENDING   // Pendiente de validación
+  VALIDATED // Validada
+  OBSERVED  // Con observaciones
+}
+
+// ==================== USUARIOS DEL SISTEMA ====================
+
+model User {
+  id           String           @id @default(cuid())
+  email        String           @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  role         Role
+  isActive     Boolean          @default(true)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  validations  WeekValidation[]
+
+  @@map("users")
+}
+
+// ==================== DOCENTES ====================
+
+model Teacher {
+  id        String           @id @default(cuid())
+  firstName String
+  lastName  String
+  dni       String           @unique
+  phone     String?
+  email     String?
+  isActive  Boolean          @default(true)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  classes   TeacherClass[]
+  validations WeekValidation[]
+
+  @@map("teachers")
+}
+
+// ==================== ESTRUCTURA ACADÉMICA ====================
+
+model Area {
+  id      String   @id @default(cuid())
+  name    String   @unique
+  courses Course[]
+
+  @@map("areas")
+}
+
+model Course {
+  id      String         @id @default(cuid())
+  name    String
+  areaId  String
+  area    Area           @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  classes TeacherClass[]
+
+  @@map("courses")
+}
+
+model Sede {
+  id         String         @id @default(cuid())
+  name       String         @unique
+  classrooms Classroom[]
+  classes    TeacherClass[]
+
+  @@map("sedes")
+}
+
+model Classroom {
+  id      String         @id @default(cuid())
+  name    String
+  sedeId  String
+  sede    Sede           @relation(fields: [sedeId], references: [id], onDelete: Cascade)
+  classes TeacherClass[]
+
+  @@unique([name, sedeId])
+  @@map("classrooms")
+}
+
+// ==================== PERÍODO (12 SEMANAS) ====================
+
+model Period {
+  id        String         @id @default(cuid())
+  name      String         @unique // "2026-1"
+  startDate DateTime       // Lunes de la semana 1
+  weeks     Int            @default(12)
+  isActive  Boolean        @default(true)
+  classes   TeacherClass[]
+
+  @@map("periods")
+}
+
+// ==================== CLASE ASIGNADA ====================
+// Docente + Curso + Sede + Día = 1 clase (pesa 3 horas)
+
+model TeacherClass {
+  id          String             @id @default(cuid())
+  teacherId   String
+  courseId    String
+  sedeId      String
+  classroomId String?            // Opcional (para validación de cobertura)
+  periodId    String
+  dayOfWeek   Int                // 1=Lunes ... 5=Viernes
+  hours       Int                @default(3)
+  startTime   String?            // Opcional "08:00-10:00"
+  isActive    Boolean            @default(true)
+  teacher     Teacher            @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  course      Course             @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  sede        Sede               @relation(fields: [sedeId], references: [id], onDelete: Cascade)
+  classroom   Classroom?         @relation(fields: [classroomId], references: [id], onDelete: SetNull)
+  period      Period             @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  attendances AttendanceRecord[]
+
+  @@index([dayOfWeek])
+  @@index([sedeId])
+  @@map("teacher_classes")
+}
+
+// ==================== REGISTRO DE ASISTENCIA ====================
+// Uno por clase asignada por fecha
+
+model AttendanceRecord {
+  id             String         @id @default(cuid())
+  teacherClassId String
+  date           DateTime       @db.Date
+  status         AttendanceStatus
+  lateMinutes    Int            @default(0) // Minutos de tardanza
+  notes          String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  teacherClass   TeacherClass   @relation(fields: [teacherClassId], references: [id], onDelete: Cascade)
+
+  @@unique([teacherClassId, date]) // 1 registro por clase por día
+  @@index([date])
+  @@map("attendance_records")
+}
+
+// ==================== VALIDACIÓN SEMANAL ====================
+// El coordinador valida la semana de cada docente
+
+model WeekValidation {
+  id            String   @id @default(cuid())
+  teacherId     String
+  periodId      String
+  weekNumber    Int      // 1 a 12
+  status        ValidationStatus @default(PENDING)
+  comment       String?
+  validatedById String?
+  validatedBy   User?    @relation(fields: [validatedById], references: [id], onDelete: SetNull)
+  teacher       Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([teacherId, periodId, weekNumber])
+  @@map("week_validations")
+}
