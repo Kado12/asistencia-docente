@@ -8,6 +8,8 @@ const menu = [
   { path: '/areas', label: '📚 Áreas y Cursos' },
   { path: '/sedes', label: '🏫 Sedes y Salones' },
   { path: '/classes', label: '🗓️ Clases Asignadas' },
+  { path: '/attendance/daily', label: '✅ Asistencia Diaria' },
+  { path: '/attendance/weekly', label: '📊 Vista Semanal' },
 ];
 
 export const Layout: React.FC = () => {

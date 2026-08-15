@@ -7,6 +7,8 @@ import { TeachersPage } from './pages/TeachersPage';
 import { AreasPage } from './pages/AreasPage';
 import { SedesPage } from './pages/SedesPage';
 import { TeacherClassesPage } from './pages/TeacherClassesPage';
+import { DailyAttendancePage } from './pages/DailyAttendancePage';
+import { WeeklyViewPage } from './pages/WeeklyViewPage';
 
 const Home: React.FC = () => {
   const { user } = useAuth();
@@ -51,6 +53,8 @@ const App: React.FC = () => (
           <Route path="/areas" element={<AreasPage />} />
           <Route path="/sedes" element={<SedesPage />} />
           <Route path="/classes" element={<TeacherClassesPage />} />
+          <Route path="/attendance/daily" element={<DailyAttendancePage />} />
+          <Route path="/attendance/weekly" element={<WeeklyViewPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
