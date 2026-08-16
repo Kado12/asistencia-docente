@@ -22,8 +22,8 @@ export const TEMPLATES: Record<string, { headers: string[]; example: string[] }>
     example: ['Juan', 'Pérez García', '12345678', '999999999', 'juan@mail.com'],
   },
   classes: {
-    headers: ['DNI Docente', 'Curso', 'Sede', 'Salon', 'Dia', 'Hora'],
-    example: ['12345678', 'Álgebra', 'Sede Central', 'Salon 1', 'Lunes', '08:00-10:00'],
+    headers: ['DNI Docente', 'Curso', 'Sede', 'Salon', 'Dia', 'Hora', 'Bloque'],
+    example: ['12345678', 'Álgebra', 'Sede Central', 'Salon 1', 'Lunes', '08:00-10:00', 'Bloque 1'],
   },
 };
 
@@ -154,37 +154,81 @@ export class ImportsService {
     if (!period) throw new BadRequestException('No hay un período activo');
 
     for (let i = 0; i < rows.length; i++) {
-      const [dni, courseName, sedeName, classroomName, dayStr, startTime] = rows[i];
+      const [dni, courseName, sedeName, classroomName, dayStr, startTime, blockName] = rows[i];
 
+      // ===== DOCENTE =====
       const teacher = await this.prisma.teacher.findUnique({ where: { dni } });
-      if (!teacher) { result.errors.push({ row: i + 2, reason: `Docente no encontrado: ${dni}` }); continue; }
+      if (!teacher) {
+        result.errors.push({ row: i + 2, reason: `Docente no encontrado: ${dni}` });
+        continue;
+      }
 
-      const course = await this.prisma.course.findFirst({
-        where: { name: courseName },
-      });
-      if (!course) { result.errors.push({ row: i + 2, reason: `Curso no encontrado: ${courseName}` }); continue; }
+      // ===== CURSO =====
+      const course = await this.prisma.course.findFirst({ where: { name: courseName } });
+      if (!course) {
+        result.errors.push({ row: i + 2, reason: `Curso no encontrado: ${courseName}` });
+        continue;
+      }
 
+      // ===== SEDE =====
       const sede = await this.prisma.sede.findUnique({ where: { name: sedeName } });
-      if (!sede) { result.errors.push({ row: i + 2, reason: `Sede no encontrada: ${sedeName}` }); continue; }
+      if (!sede) {
+        result.errors.push({ row: i + 2, reason: `Sede no encontrada: ${sedeName}` });
+        continue;
+      }
 
+      // ===== SALÓN (opcional) =====
       let classroomId: string | null = null;
       if (classroomName) {
-        const classroom = await this.prisma.classroom.findFirst({ where: { name: classroomName, sedeId: sede.id } });
-        if (!classroom) { result.errors.push({ row: i + 2, reason: `Salón no encontrado: ${classroomName}` }); continue; }
+        const classroom = await this.prisma.classroom.findFirst({
+          where: { name: classroomName, sedeId: sede.id },
+        });
+        if (!classroom) {
+          result.errors.push({ row: i + 2, reason: `Salón no encontrado: ${classroomName}` });
+          continue;
+        }
         classroomId = classroom.id;
       }
 
+      // ===== DÍA =====
       const day = DAY_MAP[dayStr?.toLowerCase()] || parseInt(dayStr);
       if (!day || day < 1 || day > 5) {
         result.errors.push({ row: i + 2, reason: `Día no válido: ${dayStr} (use Lunes-Viernes o 1-5)` });
         continue;
       }
 
-      const exists = await this.prisma.teacherClass.findFirst({
-        where: { teacherId: teacher.id, courseId: course.id, sedeId: sede.id, dayOfWeek: day, periodId: period.id },
-      });
-      if (exists) { result.skipped++; continue; }
+      // ===== BLOQUE (opcional) =====
+      // Si viene nombre → busca el bloque en el período activo
+      // Si viene vacío → null = todo el período
+      let blockId: string | null = null;
+      if (blockName) {
+        const block = await this.prisma.block.findFirst({
+          where: { periodId: period.id, name: blockName },
+        });
+        if (!block) {
+          result.errors.push({ row: i + 2, reason: `Bloque no encontrado: ${blockName}` });
+          continue;
+        }
+        blockId = block.id;
+      }
 
+      // ===== DUPLICADO (incluye el bloque para permitir el mismo curso en otro bloque) =====
+      const exists = await this.prisma.teacherClass.findFirst({
+        where: {
+          teacherId: teacher.id,
+          courseId: course.id,
+          sedeId: sede.id,
+          dayOfWeek: day,
+          periodId: period.id,
+          blockId: blockId, // null compara contra null correctamente
+        },
+      });
+      if (exists) {
+        result.skipped++;
+        continue;
+      }
+
+      // ===== CREAR =====
       await this.prisma.teacherClass.create({
         data: {
           teacherId: teacher.id,
@@ -195,10 +239,12 @@ export class ImportsService {
           dayOfWeek: day,
           hours: 3,
           startTime: startTime || null,
+          blockId, // ← null = todo el período
         },
       });
       result.created++;
     }
+
     return result;
   }
 }

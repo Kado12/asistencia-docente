@@ -14,7 +14,7 @@ export interface ConsolidatedRow {
 
 export interface ReportParams {
   periodId: string;
-  mode: 'week' | 'month' | 'period';
+  mode: 'week' | 'month' | 'period' | 'block';
   weekNumber?: number;
   month?: string;
   groupBy: 'teacher' | 'sede' | 'area' | 'course';
@@ -22,12 +22,14 @@ export interface ReportParams {
   areaId?: string;
   courseId?: string;
   teacherId?: string;
+  blockId?: string;
 }
 
 const buildParams = (p: ReportParams) => {
   const params = new URLSearchParams();
   params.append('periodId', p.periodId);
   params.append('mode', p.mode);
+  if (p.blockId) params.append('blockId', p.blockId);
   if (p.weekNumber) params.append('weekNumber', String(p.weekNumber));
   if (p.month) params.append('month', p.month);
   params.append('groupBy', p.groupBy);

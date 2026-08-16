@@ -16,6 +16,8 @@ export interface TeacherClass {
   sede?: { id: string; name: string };
   classroom?: { id: string; name: string } | null;
   period?: { id: string; name: string };
+  blockId?: string | null;
+  block?: { id: string; name: string } | null;
 }
 
 export const DAY_NAMES = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
@@ -38,6 +40,7 @@ export const teacherClassesService = {
     return (await api.post('/api/teacher-classes', data)).data;
   },
   async update(id: string, data: any) {
+    console.log(data)
     return (await api.patch(`/api/teacher-classes/${id}`, data)).data;
   },
   async remove(id: string) {

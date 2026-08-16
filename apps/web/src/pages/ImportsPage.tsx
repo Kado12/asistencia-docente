@@ -65,8 +65,9 @@ export const ImportsPage: React.FC = () => {
         </div>
         <p className="text-xs text-gray-500 mt-3 bg-blue-50 border border-blue-200 rounded p-2">
           💡 Descarga la plantilla para ver el formato exacto de columnas. Los duplicados se omiten
-          automáticamente. Para <strong>Clases</strong>, el día puede ser "Lunes"..."Viernes" o 1-5,
-          y se usa el período activo.
+          automáticamente. Para <strong>Clases</strong>: el día puede ser "Lunes"..."Viernes" o 1-5,
+          se usa el período activo, y la columna <strong>Bloque</strong> es opcional
+          (si va vacía, la clase rige para todo el período).
         </p>
       </Card>
 

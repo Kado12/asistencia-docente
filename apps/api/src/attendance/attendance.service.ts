@@ -36,6 +36,28 @@ export class AttendanceService {
     });
   }
 
+    /**
+   * Calcula el número de semana (1..N) de una fecha dentro del período
+   */
+  private getWeekNumber(period: { startDate: Date; weeks: number }, date: Date): number | null {
+    const diffMs = date.getTime() - period.startDate.getTime();
+    const week = Math.floor(diffMs / (7 * 24 * 60 * 60 * 1000)) + 1;
+    if (week < 1 || week > period.weeks) return null;
+    return week;
+  }
+
+  /**
+   * Filtro de bloques: clases sin bloque (todo el período) O clases cuyo bloque contiene la semana
+   */
+  private blockFilter(week: number) {
+    return {
+      OR: [
+        { blockId: null },
+        { block: { startWeek: { lte: week }, endWeek: { gte: week } } },
+      ],
+    };
+  }
+
   /**
    * Vista diaria: clases programadas para la fecha + registros existentes
   */
@@ -51,16 +73,17 @@ export class AttendanceService {
     // La fecha debe estar dentro de un período activo
     const period = await this.getPeriodForDate(date);
     if (!period) {
-      throw new BadRequestException(
-        'La fecha está FUERA del período de clases. Verifica el período en "Períodos".',
-      );
+      throw new BadRequestException('La fecha está FUERA del período de clases.');
     }
+
+    const week = this.getWeekNumber(period, date);
 
     const classes = await this.prisma.teacherClass.findMany({
       where: {
         isActive: true,
         dayOfWeek: dow,
         periodId: period?.id,
+        ...this.blockFilter(week!),
         ...(sedeId ? { sedeId } : {}),
       },
       include: {
@@ -111,11 +134,26 @@ export class AttendanceService {
     const date = parseDate(dto.date);
     const dow = date.getUTCDay();
     // La fecha debe estar dentro de un período activo
-    const period = await this.getPeriodForDate(date);
+        const period = await this.getPeriodForDate(date);
     if (!period) {
-      throw new BadRequestException(
-        'La fecha está FUERA del período de clases. Verifica el período en "Períodos".',
-      );
+      throw new BadRequestException('La fecha está fuera del período de clases');
+    }
+
+    const week = this.getWeekNumber(period, date); // ← NUEVO
+
+    // Validar que las clases pertenezcan al bloque de la semana
+    const validClasses = await this.prisma.teacherClass.findMany({
+      where: { periodId: period.id, ...this.blockFilter(week!) },
+      select: { id: true },
+    });
+    const validIds = new Set(validClasses.map((c) => c.id));
+
+    for (const record of dto.records) {
+      if (!validIds.has(record.teacherClassId)) {
+        throw new BadRequestException(
+          `Una de las clases no corresponde a la semana ${week} (bloque inactivo)`,
+        );
+      }
     }
 
     if (dow < 1 || dow > 5) {
@@ -177,7 +215,7 @@ export class AttendanceService {
 
     // Clases del docente en el período con sus asistencias de esa semana
     const classes = await this.prisma.teacherClass.findMany({
-      where: { teacherId, periodId },
+      where: { teacherId, periodId, ...this.blockFilter(weekNumber) },
       include: {
         course: { include: { area: true } },
         sede: true,

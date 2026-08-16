@@ -1,6 +1,8 @@
 import { IsString, IsOptional, IsInt, Min, Max } from 'class-validator';
 
 export class CreateTeacherClassDto {
+  @IsString() blockId: string;
+
   @IsString() teacherId: string;
 
   @IsString() courseId: string;
@@ -19,6 +21,7 @@ export class CreateTeacherClassDto {
 }
 
 export class UpdateTeacherClassDto {
+  @IsOptional() @IsString() blockId?: string;
   @IsOptional() @IsString() teacherId?: string;
   @IsOptional() @IsString() courseId?: string;
   @IsOptional() @IsString() sedeId?: string;

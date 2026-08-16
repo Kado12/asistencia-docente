@@ -5,7 +5,58 @@ import { PrismaService } from '../prisma/prisma.service';
 export class AcademicService {
   constructor(private prisma: PrismaService) {}
 
-    // ===== PERÍODOS =====
+    // ===== BLOQUES =====
+
+  async createBlock(data: { periodId: string; name: string; startWeek: number; endWeek: number }) {
+    const period = await this.prisma.period.findUnique({ where: { id: data.periodId } });
+    if (!period) throw new NotFoundException('Período no encontrado');
+
+    if (data.startWeek < 1 || data.endWeek > period.weeks || data.startWeek > data.endWeek) {
+      throw new BadRequestException(
+        `Las semanas deben estar entre 1 y ${period.weeks}, y el inicio no puede ser mayor al fin`,
+      );
+    }
+
+    return this.prisma.block.create({ data });
+  }
+
+  async findAllBlocks(periodId?: string) {
+    return this.prisma.block.findMany({
+      where: periodId ? { periodId } : {},
+      include: { period: true, _count: { select: { classes: true } } },
+      orderBy: [{ periodId: 'asc' }, { startWeek: 'asc' }],
+    });
+  }
+
+  async updateBlock(id: string, data: { name?: string; startWeek?: number; endWeek?: number }) {
+    const block = await this.prisma.block.findUnique({ where: { id }, include: { period: true } });
+    if (!block) throw new NotFoundException('Bloque no encontrado');
+
+    const startWeek = data.startWeek ?? block.startWeek;
+    const endWeek = data.endWeek ?? block.endWeek;
+
+    if (startWeek < 1 || endWeek > block.period.weeks || startWeek > endWeek) {
+      throw new BadRequestException('Rango de semanas inválido');
+    }
+
+    return this.prisma.block.update({ where: { id }, data });
+  }
+
+  async deleteBlock(id: string) {
+    const block = await this.prisma.block.findUnique({
+      where: { id },
+      include: { classes: true },
+    });
+    if (!block) throw new NotFoundException('Bloque no encontrado');
+    if (block.classes.length > 0) {
+      throw new ConflictException(
+        'No se puede eliminar: tiene clases asignadas. Reasígnalas o elimínalas primero.',
+      );
+    }
+    return this.prisma.block.delete({ where: { id } });
+  }
+
+  // ===== PERÍODOS =====
 
   async createPeriod(name: string, startDate: string, weeks: number) {
     const exists = await this.prisma.period.findUnique({ where: { name } });

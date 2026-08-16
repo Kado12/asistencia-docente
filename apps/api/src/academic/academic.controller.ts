@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards, Query } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AcademicService } from './academic.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -12,6 +12,31 @@ import { Role } from '@control/database';
 @Controller('academic')
 export class AcademicController {
   constructor(private readonly academicService: AcademicService) {}
+
+    // ===== BLOQUES =====
+  @Post('blocks')
+  @Roles(Role.ADMIN)
+  createBlock(@Body() body: { periodId: string; name: string; startWeek: number; endWeek: number }) {
+    return this.academicService.createBlock(body);
+  }
+
+  @Get('blocks')
+  @Roles(Role.ADMIN, Role.COORDINADOR)
+  findAllBlocks(@Query('periodId') periodId?: string) {
+    return this.academicService.findAllBlocks(periodId);
+  }
+
+  @Patch('blocks/:id')
+  @Roles(Role.ADMIN)
+  updateBlock(@Param('id') id: string, @Body() body: { name?: string; startWeek?: number; endWeek?: number }) {
+    return this.academicService.updateBlock(id, body);
+  }
+
+  @Delete('blocks/:id')
+  @Roles(Role.ADMIN)
+  deleteBlock(@Param('id') id: string) {
+    return this.academicService.deleteBlock(id);
+  }
 
   // ===== PERIODOS =====
   @Post('periods')

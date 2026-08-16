@@ -39,6 +39,7 @@ export class TeacherClassesService {
     return this.prisma.teacherClass.findMany({
       where,
       include: {
+        block: true,
         teacher: true,
         course: { include: { area: true } },
         sede: true,
@@ -57,10 +58,13 @@ export class TeacherClassesService {
     const exists = await this.prisma.teacherClass.findUnique({ where: { id } });
     if (!exists) throw new NotFoundException('Clase no encontrada');
 
+    console.log(dto)
+
     return this.prisma.teacherClass.update({
       where: { id },
       data: dto,
       include: {
+        block: true,
         teacher: true,
         course: { include: { area: true } },
         sede: true,

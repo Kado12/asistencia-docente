@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Button, Select, Card, Modal, ConfirmModal, useToast } from '../components/ui';
 import { teacherClassesService, type TeacherClass, DAY_NAMES } from '../api/teacher-classes.service';
 import { teachersService, type Teacher } from '../api/teachers.service';
-import { academicService, type Area, type Sede, type Period } from '../api/academic.service';
+import { academicService, type Area, type Sede, type Period, type Block } from '../api/academic.service';
 
 export const TeacherClassesPage: React.FC = () => {
   const { addToast } = useToast();
@@ -12,6 +12,7 @@ export const TeacherClassesPage: React.FC = () => {
   const [areas, setAreas] = useState<Area[]>([]);
   const [sedes, setSedes] = useState<Sede[]>([]);
   const [periods, setPeriods] = useState<Period[]>([]);
+  const [blocks, setBlocks] = useState<Block[]>([]);
 
   const [filterSede, setFilterSede] = useState('');
   const [filterDay, setFilterDay] = useState('');
@@ -19,6 +20,7 @@ export const TeacherClassesPage: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<TeacherClass | null>(null);
   const [formData, setFormData] = useState({
+    blockId: '',
     teacherId: '',
     courseId: '',
     sedeId: '',
@@ -58,6 +60,11 @@ export const TeacherClassesPage: React.FC = () => {
       addToast('error', 'Error al cargar datos base');
     }
   };
+  useEffect(() => {
+    if (formData.periodId) {
+      academicService.getBlocks(formData.periodId).then(setBlocks);
+    }
+  }, [formData.periodId]);
 
   useEffect(() => {
     loadBase();
@@ -80,6 +87,7 @@ export const TeacherClassesPage: React.FC = () => {
   const openCreate = () => {
     setEditing(null);
     setFormData({
+      blockId: '',
       teacherId: '',
       courseId: '',
       sedeId: '',
@@ -94,6 +102,7 @@ export const TeacherClassesPage: React.FC = () => {
   const openEdit = (c: TeacherClass) => {
     setEditing(c);
     setFormData({
+      blockId: c.blockId || '',
       teacherId: c.teacherId,
       courseId: c.courseId,
       sedeId: c.sedeId,
@@ -111,6 +120,7 @@ export const TeacherClassesPage: React.FC = () => {
     try {
       const payload = {
         ...formData,
+        blockId: formData.blockId || undefined,
         dayOfWeek: parseInt(formData.dayOfWeek),
         classroomId: formData.classroomId || undefined,
         startTime: formData.startTime || undefined,
@@ -175,6 +185,7 @@ export const TeacherClassesPage: React.FC = () => {
           <thead className="bg-gray-50">
             <tr>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Docente</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bloque</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Curso</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sede</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Salón</th>
@@ -192,6 +203,7 @@ export const TeacherClassesPage: React.FC = () => {
                   <td className="px-4 py-3 text-sm font-medium text-gray-900">
                     {c.teacher?.lastName}, {c.teacher?.firstName}
                   </td>
+                  <td className="px-4 py-3 text-sm text-gray-500">{c.block ? `🧱 ${c.block.name}` : 'Todo el período'}</td>
                   <td className="px-4 py-3 text-sm text-gray-500">
                     {c.course?.name}
                     <span className="text-xs text-gray-400"> ({c.course?.area?.name})</span>
@@ -214,6 +226,15 @@ export const TeacherClassesPage: React.FC = () => {
       <Modal isOpen={showForm} onClose={() => setShowForm(false)} title={editing ? 'Editar Clase' : 'Asignar Clase'} size="lg">
         <form onSubmit={handleSave} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
+            <Select
+              label="Bloque (opcional)"
+              value={formData.blockId}
+              onChange={(e) => setFormData({ ...formData, blockId: e.target.value })}
+              options={[
+                { value: '', label: 'Todo el período' },
+                ...blocks.map((b) => ({ value: b.id, label: `${b.name} (S${b.startWeek}-S${b.endWeek})` })),
+              ]}
+            />
             <Select
               label="Docente"
               value={formData.teacherId}

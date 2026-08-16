@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Select, Card, useToast } from '../components/ui';
 import { reportsService, type ConsolidatedRow, type ReportParams } from '../api/reports.service';
-import { academicService, type Area, type Sede, type Period } from '../api/academic.service';
+import { academicService, type Area, type Sede, type Period, type Block } from '../api/academic.service';
 import { teachersService, type Teacher } from '../api/teachers.service';
 
 export const ReportsPage: React.FC = () => {
@@ -12,6 +12,7 @@ export const ReportsPage: React.FC = () => {
   const [sedes, setSedes] = useState<Sede[]>([]);
   const [areas, setAreas] = useState<Area[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [blocks, setBlocks] = useState<Block[]>([]);
 
   // Parámetros del reporte
   const [params, setParams] = useState<ReportParams>({
@@ -24,12 +25,17 @@ export const ReportsPage: React.FC = () => {
     areaId: '',
     courseId: '',
     teacherId: '',
+    blockId: '',
   });
 
   const [rows, setRows] = useState<ConsolidatedRow[]>([]);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+
+  useEffect(() => {
+    if (params.periodId) academicService.getBlocks(params.periodId).then(setBlocks);
+  }, [params.periodId]);
 
   useEffect(() => {
     (async () => {
@@ -140,6 +146,7 @@ export const ReportsPage: React.FC = () => {
               { value: 'week', label: 'Semanal' },
               { value: 'month', label: 'Mensual' },
               { value: 'period', label: 'Período completo' },
+              { value: 'block', label: 'Por Bloque' },
             ]}
           />
           {params.mode === 'week' && (
@@ -176,6 +183,14 @@ export const ReportsPage: React.FC = () => {
 
         {/* Filtros adicionales */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t">
+          {params.mode === 'block' && (
+            <Select
+              label="Bloque"
+              value={params.blockId || ''}
+              onChange={(e) => setParam('blockId', e.target.value || undefined)}
+              options={[{ value: '', label: 'Todas' }, ...blocks.map((b) => ({ value: b.id, label: `${b.name} (S${b.startWeek}-S${b.endWeek})` }))]}
+            />
+          )}
           <Select
             label="Filtrar sede"
             value={params.sedeId || ''}

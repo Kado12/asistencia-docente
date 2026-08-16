@@ -122,6 +122,7 @@ model TeacherClass {
   teacherId   String
   courseId    String
   sedeId      String
+  blockId     String?
   classroomId String?            // Opcional (para validación de cobertura)
   periodId    String
   dayOfWeek   Int                // 1=Lunes ... 5=Viernes
@@ -134,7 +135,6 @@ model TeacherClass {
   classroom   Classroom?         @relation(fields: [classroomId], references: [id], onDelete: SetNull)
   period      Period             @relation(fields: [periodId], references: [id], onDelete: Cascade)
   attendances AttendanceRecord[]
-  blockId     String?
   block       Block?             @relation(fields: [blockId], references: [id], onDelete: SetNull)
 
   @@index([dayOfWeek])

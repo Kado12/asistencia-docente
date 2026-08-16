@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LoginPage } from './pages/LoginPage';
 import { Layout } from './components/layout/Layout';
@@ -15,6 +15,7 @@ import { ValidationPage } from './pages/ValidationPage';
 import { PeriodsPage } from './pages/PeriodsPage';
 import { UsersPage } from './pages/UsersPage';
 import { ImportsPage } from './pages/ImportsPage';
+import { BlocksPage } from './pages/BlocksPage';
 
 const ProtectedRoute: React.FC = () => {
   const { user, isLoading } = useAuth();
@@ -32,6 +33,7 @@ const App: React.FC = () => (
           <Route path="/" element={<DashboardPage />} />
           <Route path="/periods" element={<PeriodsPage />} />
           <Route path="/teachers" element={<TeachersPage />} />
+          <Route path="/blocks" element={<BlocksPage />} />
           <Route path="/areas" element={<AreasPage />} />
           <Route path="/sedes" element={<SedesPage />} />
           <Route path="/classes" element={<TeacherClassesPage />} />

@@ -25,6 +25,7 @@ export class ReportsController {
       areaId: query.areaId,
       courseId: query.courseId,
       teacherId: query.teacherId,
+      blockId: query.blockId,
     };
   }
 

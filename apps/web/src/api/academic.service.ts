@@ -32,7 +32,30 @@ export interface Period {
   isActive: boolean;
 }
 
+export interface Block {
+  id: string;
+  periodId: string;
+  name: string;
+  startWeek: number;
+  endWeek: number;
+  _count?: { classes: number };
+}
+
 export const academicService = {
+  // Bloque
+  async getBlocks(periodId?: string): Promise<Block[]> {
+    const q = periodId ? `?periodId=${periodId}` : '';
+    return (await api.get(`/api/academic/blocks${q}`)).data;
+  },
+  async createBlock(data: { periodId: string; name: string; startWeek: number; endWeek: number }) {
+    return (await api.post('/api/academic/blocks', data)).data;
+  },
+  async updateBlock(id: string, data: { name?: string; startWeek?: number; endWeek?: number }) {
+    return (await api.patch(`/api/academic/blocks/${id}`, data)).data;
+  },
+  async deleteBlock(id: string) {
+    return (await api.delete(`/api/academic/blocks/${id}`)).data;
+  },
   // Periodos
   async createPeriod(name: string, startDate: string, weeks: number) {
     return (await api.post('/api/academic/periods', { name, startDate, weeks })).data;

@@ -3,13 +3,14 @@ import { PrismaService } from '../prisma/prisma.service';
 import * as ExcelJS from 'exceljs';
 
 export type GroupBy = 'teacher' | 'sede' | 'area' | 'course';
-export type ReportMode = 'week' | 'month' | 'period';
+export type ReportMode = 'week' | 'month' | 'period' | 'block';
 
 export interface ConsolidatedParams {
   periodId: string;
   mode: ReportMode;
   weekNumber?: number;
-  month?: string; // YYYY-MM
+  month?: string;
+  blockId?: string;
   groupBy: GroupBy;
   sedeId?: string;
   areaId?: string;
@@ -71,18 +72,29 @@ export class ReportsService {
    * Consolidado agrupado con filtros
    */
   async getConsolidated(params: ConsolidatedParams): Promise<ConsolidatedRow[]> {
-    const period = await this.prisma.period.findUnique({
-      where: { id: params.periodId },
-    });
+    const period = await this.prisma.period.findUnique({ where: { id: params.periodId } });
     if (!period) throw new NotFoundException('Período no encontrado');
 
-    const { start, end } = this.getRange(period, params);
+    // Rango de fechas (con soporte de bloque)
+    let range: { start: Date; end: Date };
+    if (params.mode === 'block' && params.blockId) {
+      const block = await this.prisma.block.findUnique({ where: { id: params.blockId } });
+      if (!block) throw new NotFoundException('Bloque no encontrado');
+      range = {
+        start: addDays(period.startDate, (block.startWeek - 1) * 7),
+        end: addDays(period.startDate, block.endWeek * 7 - 1),
+      };
+    } else {
+      range = this.getRange(period, params);
+    }
+    const { start, end } = range;
 
     const records = await this.prisma.attendanceRecord.findMany({
       where: {
         date: { gte: start, lte: end },
         teacherClass: {
           periodId: params.periodId,
+          ...(params.blockId ? { blockId: params.blockId } : {}),
           ...(params.teacherId ? { teacherId: params.teacherId } : {}),
           ...(params.sedeId ? { sedeId: params.sedeId } : {}),
           ...(params.courseId ? { courseId: params.courseId } : {}),
@@ -167,6 +179,18 @@ export class ReportsService {
       .sort((a, b) => a.label.localeCompare(b.label));
   }
 
+  private async resolveRange(period: any, params: ConsolidatedParams) {
+    if (params.mode === 'block' && params.blockId) {
+      const block = await this.prisma.block.findUnique({ where: { id: params.blockId } });
+      if (!block) throw new NotFoundException('Bloque no encontrado');
+      return {
+        start: addDays(period.startDate, (block.startWeek - 1) * 7),
+        end: addDays(period.startDate, block.endWeek * 7 - 1),
+      };
+    }
+    return this.getRange(period, params);
+  }
+
   /**
    * Genera el Excel del consolidado
    */
@@ -177,7 +201,8 @@ export class ReportsService {
     if (!period) throw new NotFoundException('Período no encontrado');
 
     const rows = await this.getConsolidated(params);
-    const { start, end } = this.getRange(period, params);
+    const range = await this.resolveRange(period, params)
+    const { start, end } = range;
 
     const workbook = new ExcelJS.Workbook();
     workbook.creator = 'Control de Asistencia Docente';
