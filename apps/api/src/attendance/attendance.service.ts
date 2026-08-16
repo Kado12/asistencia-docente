@@ -5,7 +5,7 @@ import { AttendanceStatus } from '@control/database';
 
 export const DAY_NAMES = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
 
-// ===== HELPERS DE FECHAS (UTC para evitar problemas de zona horaria) =====
+// ===== HELPERS DE FECHAS (UTC) =====
 
 const parseDate = (s: string): Date => new Date(`${s}T00:00:00Z`);
 
@@ -14,25 +14,53 @@ const formatDate = (d: Date): string => d.toISOString().split('T')[0];
 const sameDay = (a: Date, b: Date): boolean =>
   a.toISOString().split('T')[0] === b.toISOString().split('T')[0];
 
+// ✅ AGREGAR ESTE:
+const addDays = (d: Date, days: number): Date => {
+  const r = new Date(d);
+  r.setUTCDate(r.getUTCDate() + days);
+  return r;
+};
+
 @Injectable()
 export class AttendanceService {
   constructor(private prisma: PrismaService) {}
 
   /**
+   * Busca el período activo que contiene la fecha
+  */
+  private async getPeriodForDate(date: Date) {
+    const periods = await this.prisma.period.findMany({ where: { isActive: true } });
+    return periods.find((p) => {
+       const end = addDays(p.startDate, p.weeks * 7 - 1);
+      return date >= p.startDate && date <= end;
+    });
+  }
+
+  /**
    * Vista diaria: clases programadas para la fecha + registros existentes
-   */
+  */
   async getDaily(dateStr: string, sedeId?: string) {
+    
     const date = parseDate(dateStr);
     const dow = date.getUTCDay(); // 1=Lunes ... 5=Viernes
 
     if (dow < 1 || dow > 5) {
       throw new BadRequestException('La fecha cae en fin de semana. La semana es de Lunes a Viernes.');
     }
+    
+    // La fecha debe estar dentro de un período activo
+    const period = await this.getPeriodForDate(date);
+    if (!period) {
+      throw new BadRequestException(
+        'La fecha está FUERA del período de clases. Verifica el período en "Períodos".',
+      );
+    }
 
     const classes = await this.prisma.teacherClass.findMany({
       where: {
         isActive: true,
         dayOfWeek: dow,
+        periodId: period?.id,
         ...(sedeId ? { sedeId } : {}),
       },
       include: {
@@ -82,6 +110,13 @@ export class AttendanceService {
   async saveDaily(dto: SaveDailyAttendanceDto) {
     const date = parseDate(dto.date);
     const dow = date.getUTCDay();
+    // La fecha debe estar dentro de un período activo
+    const period = await this.getPeriodForDate(date);
+    if (!period) {
+      throw new BadRequestException(
+        'La fecha está FUERA del período de clases. Verifica el período en "Períodos".',
+      );
+    }
 
     if (dow < 1 || dow > 5) {
       throw new BadRequestException('No se puede registrar asistencia en fin de semana');
@@ -171,6 +206,8 @@ export class AttendanceService {
       const presents = records.filter((r) => r.status === 'PRESENT');
       const absents = records.filter((r) => r.status === 'ABSENT');
 
+      
+      
       return {
         date: formatDate(d),
         dayName: DAY_NAMES[i + 1],
@@ -181,7 +218,7 @@ export class AttendanceService {
         records,
       };
     });
-
+    
     // Totales de la semana
     const totals = dayRows.reduce(
       (acc, d) => ({

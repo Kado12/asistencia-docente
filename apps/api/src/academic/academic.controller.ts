@@ -13,6 +13,28 @@ import { Role } from '@control/database';
 export class AcademicController {
   constructor(private readonly academicService: AcademicService) {}
 
+  // ===== PERIODOS =====
+  @Post('periods')
+  @Roles(Role.ADMIN)
+  createPeriod(@Body() body: { name: string; startDate: string; weeks?: number }) {
+    return this.academicService.createPeriod(body.name, body.startDate, body.weeks || 12);
+  }
+
+  @Patch('periods/:id')
+  @Roles(Role.ADMIN)
+  updatePeriod(
+    @Param('id') id: string,
+    @Body() body: { name?: string; startDate?: string; weeks?: number; isActive?: boolean },
+  ) {
+    return this.academicService.updatePeriod(id, body);
+  }
+
+  @Delete('periods/:id')
+  @Roles(Role.ADMIN)
+  deletePeriod(@Param('id') id: string) {
+    return this.academicService.deletePeriod(id);
+  }
+
   // ===== ÁREAS =====
   @Post('areas')
   @Roles(Role.ADMIN)

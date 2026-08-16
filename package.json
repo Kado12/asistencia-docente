@@ -6,10 +6,16 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "api:dev": "pnpm --filter api run start:dev",
+    "api:build": "pnpm --filter api run build",
     "web:dev": "pnpm --filter web run dev",
+    "web:build": "pnpm --filter web run build",
     "db:migrate": "pnpm --filter @control/database run migrate",
     "db:generate": "pnpm --filter @control/database run generate",
+    "db:reset": "docker compose down -v",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
     "db:seed": "pnpm --filter @control/database run seed",
+    "db:seedA": "pnpm --filter @control/database run seedA",
     "db:studio": "pnpm --filter @control/database run studio"
   },
   "devDependencies": {

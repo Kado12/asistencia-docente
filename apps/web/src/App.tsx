@@ -12,6 +12,9 @@ import { WeeklyViewPage } from './pages/WeeklyViewPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ValidationPage } from './pages/ValidationPage';
+import { PeriodsPage } from './pages/PeriodsPage';
+import { UsersPage } from './pages/UsersPage';
+import { ImportsPage } from './pages/ImportsPage';
 
 const ProtectedRoute: React.FC = () => {
   const { user, isLoading } = useAuth();
@@ -27,6 +30,7 @@ const App: React.FC = () => (
         <Route path="/login" element={<LoginPage />} />
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<DashboardPage />} />
+          <Route path="/periods" element={<PeriodsPage />} />
           <Route path="/teachers" element={<TeachersPage />} />
           <Route path="/areas" element={<AreasPage />} />
           <Route path="/sedes" element={<SedesPage />} />
@@ -34,7 +38,9 @@ const App: React.FC = () => (
           <Route path="/attendance/daily" element={<DailyAttendancePage />} />
           <Route path="/attendance/weekly" element={<WeeklyViewPage />} />
           <Route path="/validation" element={<ValidationPage />} />
+          <Route path="/imports" element={<ImportsPage />} />
           <Route path="/reports" element={<ReportsPage />} />
+          <Route path="/users" element={<UsersPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

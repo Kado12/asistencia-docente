@@ -109,6 +109,7 @@ model Period {
   weeks     Int            @default(12)
   isActive  Boolean        @default(true)
   classes   TeacherClass[]
+  blocks    Block[]
 
   @@map("periods")
 }
@@ -133,6 +134,8 @@ model TeacherClass {
   classroom   Classroom?         @relation(fields: [classroomId], references: [id], onDelete: SetNull)
   period      Period             @relation(fields: [periodId], references: [id], onDelete: Cascade)
   attendances AttendanceRecord[]
+  blockId     String?
+  block       Block?             @relation(fields: [blockId], references: [id], onDelete: SetNull)
 
   @@index([dayOfWeek])
   @@index([sedeId])
@@ -176,4 +179,19 @@ model WeekValidation {
 
   @@unique([teacherId, periodId, weekNumber])
   @@map("week_validations")
+}
+
+// ==================== BLOQUES ====================
+
+model Block {
+  id        String         @id @default(cuid())
+  periodId  String
+  name      String         // "Bloque 1"
+  startWeek Int            // 1
+  endWeek   Int            // 6
+  period    Period         @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  classes   TeacherClass[]
+
+  @@unique([periodId, name])
+  @@map("blocks")
 }

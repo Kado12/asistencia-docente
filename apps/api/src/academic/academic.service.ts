@@ -1,9 +1,49 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class AcademicService {
   constructor(private prisma: PrismaService) {}
+
+    // ===== PERÍODOS =====
+
+  async createPeriod(name: string, startDate: string, weeks: number) {
+    const exists = await this.prisma.period.findUnique({ where: { name } });
+    if (exists) throw new ConflictException('Ya existe un período con ese nombre');
+
+    const date = new Date(`${startDate}T00:00:00Z`);
+    if (date.getUTCDay() !== 1) {
+      throw new BadRequestException('La fecha de inicio debe ser un LUNES (la semana es L-V)');
+    }
+
+    return this.prisma.period.create({
+      data: { name, startDate: date, weeks: weeks || 12, isActive: true },
+    });
+  }
+
+  async updatePeriod(id: string, data: { name?: string; startDate?: string; weeks?: number; isActive?: boolean }) {
+    const updateData: any = { ...data };
+    if (data.startDate) {
+      const date = new Date(`${data.startDate}T00:00:00Z`);
+      if (date.getUTCDay() !== 1) {
+        throw new BadRequestException('La fecha de inicio debe ser un LUNES');
+      }
+      updateData.startDate = date;
+    }
+    return this.prisma.period.update({ where: { id }, data: updateData });
+  }
+
+  async deletePeriod(id: string) {
+    const period = await this.prisma.period.findUnique({
+      where: { id },
+      include: { classes: true },
+    });
+    if (!period) throw new NotFoundException('Período no encontrado');
+    if (period.classes.length > 0) {
+      throw new ConflictException('No se puede eliminar: tiene clases asignadas. Desactívalo en su lugar.');
+    }
+    return this.prisma.period.delete({ where: { id } });
+  }
 
   // ===== ÁREAS =====
 

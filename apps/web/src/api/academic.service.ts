@@ -33,6 +33,16 @@ export interface Period {
 }
 
 export const academicService = {
+  // Periodos
+  async createPeriod(name: string, startDate: string, weeks: number) {
+    return (await api.post('/api/academic/periods', { name, startDate, weeks })).data;
+  },
+  async updatePeriod(id: string, data: { name?: string; startDate?: string; weeks?: number; isActive?: boolean }) {
+    return (await api.patch(`/api/academic/periods/${id}`, data)).data;
+  },
+  async deletePeriod(id: string) {
+    return (await api.delete(`/api/academic/periods/${id}`)).data;
+  },
   // Áreas
   async getAreas(): Promise<Area[]> {
     return (await api.get('/api/academic/areas')).data;

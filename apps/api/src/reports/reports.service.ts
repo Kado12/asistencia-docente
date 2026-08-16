@@ -213,29 +213,37 @@ export class ReportsService {
     ws.getCell('A2').alignment = { horizontal: 'center' };
 
     // ===== COLUMNAS =====
-    const columns: any[] = [
-      {
-        header: { teacher: 'Docente', sede: 'Sede', area: 'Área', course: 'Curso' }[params.groupBy],
-        key: 'label',
-        width: 32,
-      },
+        // ===== COLUMNAS (sin propiedad header, para no chocar con el título) =====
+    const headerLabels: string[] = [
+      { teacher: 'Docente', sede: 'Sede', area: 'Área', course: 'Curso' }[params.groupBy],
     ];
+    const columnDefs: any[] = [{ key: 'label', width: 32 }];
 
-    if (params.groupBy === 'teacher') columns.push({ header: 'DNI', key: 'dni', width: 12 });
-    if (params.groupBy === 'course') columns.push({ header: 'Área', key: 'area', width: 20 });
+    if (params.groupBy === 'teacher') {
+      headerLabels.push('DNI');
+      columnDefs.push({ key: 'dni', width: 12 });
+    }
+    if (params.groupBy === 'course') {
+      headerLabels.push('Área');
+      columnDefs.push({ key: 'area', width: 20 });
+    }
 
-    columns.push(
-      { header: 'Horas', key: 'hours', width: 10 },
-      { header: 'Asistencias', key: 'presents', width: 12 },
-      { header: 'Faltas', key: 'absents', width: 10 },
-      { header: 'Tardanza (min)', key: 'lateMinutes', width: 14 },
-      { header: '% Asistencia', key: 'attendanceRate', width: 12 },
+    headerLabels.push('Horas', 'Asistencias', 'Faltas', 'Tardanza (min)', '% Asistencia');
+    columnDefs.push(
+      { key: 'hours', width: 10 },
+      { key: 'presents', width: 12 },
+      { key: 'absents', width: 10 },
+      { key: 'lateMinutes', width: 14 },
+      { key: 'attendanceRate', width: 12 },
     );
 
-    ws.columns = columns;
-    console.log(ws.columns)
-    // Estilo del encabezado (fila 3)
+    ws.columns = columnDefs; // ← Solo keys y anchos, SIN header
+
+    // ===== ENCABEZADOS MANUALES EN LA FILA 3 =====
     const headerRow = ws.getRow(3);
+    headerLabels.forEach((label, i) => {
+      headerRow.getCell(i + 1).value = label;
+    });
     headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
     headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2563EB' } };
     headerRow.alignment = { vertical: 'middle', horizontal: 'center' };

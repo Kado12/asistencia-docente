@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 
 const menu = [
   { path: '/', label: '🏠 Dashboard' },
+  { path: '/periods', label: '📅 Períodos' },
   { path: '/sedes', label: '🏫 Sedes y Salones' },
   { path: '/areas', label: '📚 Áreas y Cursos' },
   { path: '/teachers', label: '👨‍ Docentes' },
@@ -11,7 +12,9 @@ const menu = [
   { path: '/attendance/daily', label: '✅ Asistencia Diaria' },
   { path: '/attendance/weekly', label: '📊 Vista Semanal' },
   { path: '/validation', label: '🛡️ Validación' },
+  { path: '/imports', label: '📥 Importar Excel' },
   { path: '/reports', label: '📑 Consolidados' },
+  { path: '/users', label: '👥 Usuarios' },
 ];
 
 export const Layout: React.FC = () => {
