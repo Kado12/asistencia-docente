@@ -11,6 +11,7 @@ import { ValidationsModule } from './validations/validations.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { UsersModule } from './users/users.module';
 import { ImportsModule } from './imports/imports.module';
+import { ToolsModule } from './tools/tools.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { ImportsModule } from './imports/imports.module';
     DashboardModule,
     UsersModule,
     ImportsModule,
+    ToolsModule,
   ],
 })
 export class AppModule {}

@@ -16,6 +16,8 @@ import { PeriodsPage } from './pages/PeriodsPage';
 import { UsersPage } from './pages/UsersPage';
 import { ImportsPage } from './pages/ImportsPage';
 import { BlocksPage } from './pages/BlocksPage';
+import { ComparePage } from './pages/ComparePage';
+import { ToolsHomePage } from './pages/ToolsHomePage';
 
 const ProtectedRoute: React.FC = () => {
   const { user, isLoading } = useAuth();
@@ -42,6 +44,8 @@ const App: React.FC = () => (
           <Route path="/validation" element={<ValidationPage />} />
           <Route path="/imports" element={<ImportsPage />} />
           <Route path="/reports" element={<ReportsPage />} />
+          <Route path="/tools" element={<ToolsHomePage />} />
+          <Route path="/tools/compare" element={<ComparePage />} />
           <Route path="/users" element={<UsersPage />} />
         </Route>
       </Routes>

@@ -5,9 +5,9 @@ import { useAuth } from '../../context/AuthContext';
 const menu = [
   { path: '/', label: '🏠 Dashboard' },
   { path: '/periods', label: '📅 Períodos' },
+  { path: '/blocks', label: '🧱 Bloques' },
   { path: '/sedes', label: '🏫 Sedes y Salones' },
   { path: '/teachers', label: '👨‍ Docentes' },
-  { path: '/blocks', label: '🧱 Bloques' },
   { path: '/areas', label: '📚 Áreas y Cursos' },
   { path: '/classes', label: '🗓️ Clases Asignadas' },
   { path: '/attendance/daily', label: '✅ Asistencia Diaria' },
@@ -15,6 +15,8 @@ const menu = [
   { path: '/validation', label: '🛡️ Validación' },
   { path: '/imports', label: '📥 Importar Excel' },
   { path: '/reports', label: '📑 Consolidados' },
+  { path: '/tools', label: '🧰 Herramientas' },
+  { path: '/tools/compare', label: '🔀 Comparar Excel' },
   { path: '/users', label: '👥 Usuarios' },
 ];
 
