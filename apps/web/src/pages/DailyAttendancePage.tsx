@@ -69,10 +69,13 @@ export const DailyAttendancePage: React.FC = () => {
   }, [load]);
 
   const setMark = (id: string, mark: Partial<Mark>) => {
-    setMarks((prev) => ({
-      ...prev,
-      [id]: { status: 'PRESENT', lateMinutes: 0, ...prev[id], ...mark },
-    }));
+    setMarks((prev) => {
+      const current = prev[id] || { status: 'PRESENT', lateMinutes: 0 };
+      return {
+        ...prev,
+        [id]: { ...current, ...mark },
+      };
+    });
   };
 
   const markAllPresent = () => {

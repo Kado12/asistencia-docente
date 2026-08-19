@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Input, Select, Card, Modal, ConfirmModal, useToast } from '../components/ui';
+import { Button, Input, Card, Modal, ConfirmModal, useToast } from '../components/ui';
 import { academicService, type Area } from '../api/academic.service';
 
 export const AreasPage: React.FC = () => {
