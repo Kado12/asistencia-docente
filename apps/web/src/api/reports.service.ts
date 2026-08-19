@@ -5,6 +5,7 @@ export interface ConsolidatedRow {
   label: string;
   dni?: string;
   area?: string;
+  course?: string;
   hours: number;
   presents: number;
   absents: number;

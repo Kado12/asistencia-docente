@@ -1,5 +1,5 @@
-import { Controller, Post, UseGuards, UseInterceptors, UploadedFiles, Res } from '@nestjs/common';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { Controller, Post, UseGuards, UseInterceptors, UploadedFiles, Res, UploadedFile } from '@nestjs/common';
+import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import { ApiTags, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
 import { ToolsService } from './tools.service';
@@ -45,6 +45,58 @@ export class ToolsController {
     res.set({
       'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'Content-Disposition': 'attachment; filename="comparativa_alumnos.xlsx"',
+    });
+    res.send(buffer);
+  }
+
+    @Post('schedule/transform')
+  @Roles(Role.ADMIN, Role.COORDINADOR)
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  transformSchedule(@UploadedFile() file: any) {
+    if (!file) throw new BadRequestException('Debes subir el archivo de horario');
+    return this.toolsService.transformSchedule(file.buffer);
+  }
+
+  @Post('schedule/transform/export')
+  @Roles(Role.ADMIN, Role.COORDINADOR)
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  async transformScheduleExport(@UploadedFile() file: any, @Res() res: Response) {
+    if (!file) throw new BadRequestException('Debes subir el archivo de horario');
+    const buffer = await this.toolsService.transformScheduleExport(file.buffer);
+
+    res.set({
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': 'attachment; filename="horario_ordenado.xlsx"',
+    });
+    res.send(buffer);
+  }
+
+  @Post('cross')
+  @Roles(Role.ADMIN, Role.COORDINADOR)
+  @UseInterceptors(FileFieldsInterceptor([{ name: 'fileInfo', maxCount: 1 }, { name: 'fileSchedule', maxCount: 1 }]))
+  @ApiConsumes('multipart/form-data')
+  crossReference(@UploadedFiles() files: any) {
+    const info = files?.fileInfo?.[0];
+    const schedule = files?.fileSchedule?.[0];
+    if (!info || !schedule) throw new BadRequestException('Debes subir ambos archivos');
+    return this.toolsService.crossReference(info.buffer, schedule.buffer);
+  }
+
+  @Post('cross/export')
+  @Roles(Role.ADMIN, Role.COORDINADOR)
+  @UseInterceptors(FileFieldsInterceptor([{ name: 'fileInfo', maxCount: 1 }, { name: 'fileSchedule', maxCount: 1 }]))
+  @ApiConsumes('multipart/form-data')
+  async crossReferenceExport(@UploadedFiles() files: any, @Res() res: Response) {
+    const info = files?.fileInfo?.[0];
+    const schedule = files?.fileSchedule?.[0];
+    if (!info || !schedule) throw new BadRequestException('Debes subir ambos archivos');
+
+    const buffer = await this.toolsService.crossReferenceExport(info.buffer, schedule.buffer);
+    res.set({
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': 'attachment; filename="horario_con_dni.xlsx"',
     });
     res.send(buffer);
   }

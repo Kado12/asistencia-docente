@@ -23,6 +23,7 @@ export interface ConsolidatedRow {
   label: string;
   dni?: string;
   area?: string;
+  course?: string,
   hours: number;
   presents: number;
   absents: number;
@@ -121,12 +122,14 @@ export class ReportsService {
       let label: string;
       let dni: string | undefined;
       let area: string | undefined;
+      let course: string | undefined;
 
       switch (params.groupBy) {
         case 'teacher':
-          key = tc.teacherId;
+          key = `${tc.teacherId}::${tc.courseId}`;
           label = `${tc.teacher.lastName}, ${tc.teacher.firstName}`;
           dni = tc.teacher.dni;
+          course = tc.course.name;
           break;
         case 'sede':
           key = tc.sedeId;
@@ -149,6 +152,7 @@ export class ReportsService {
           label,
           dni,
           area,
+          course,
           hours: 0,
           presents: 0,
           absents: 0,
@@ -176,7 +180,12 @@ export class ReportsService {
             ? Math.round((row.presents / (row.presents + row.absents)) * 100)
             : 0,
       }))
-      .sort((a, b) => a.label.localeCompare(b.label));
+      .sort((a, b) => {
+        // ✅ Ordena primero por docente y luego por curso
+        const cmpLabel = a.label.localeCompare(b.label);
+        if (cmpLabel !== 0) return cmpLabel;
+        return (a.course || '').localeCompare(b.course || '');
+      });
   }
 
   private async resolveRange(period: any, params: ConsolidatedParams) {
@@ -227,26 +236,27 @@ export class ReportsService {
       course: 'POR CURSO',
     }[params.groupBy];
 
-    ws.mergeCells('A1:H1');
-    ws.getCell('A1').value = `CONSOLIDADO DE ASISTENCIA DOCENTE ${groupLabel}`;
-    ws.getCell('A1').font = { bold: true, size: 14 };
-    ws.getCell('A1').alignment = { horizontal: 'center' };
+    // ===== TÍTULO DINÁMICO (se adapta al número de columnas) =====
+    const colCount = 6 + 
+      (params.groupBy === 'teacher' ? 2 : 0) + 
+      (params.groupBy === 'course' ? 1 : 0);
+    
+    const lastColLetter = colCount <= 26 
+      ? String.fromCharCode(64 + colCount)
+      : 'Z' + String.fromCharCode(64 + colCount - 26); // Para >26 columnas
 
-    ws.mergeCells('A2:H2');
-    ws.getCell('A2').value = `Período ${period.name} | ${modeLabel} | ${formatDate(start)} al ${formatDate(end)}`;
-    ws.getCell('A2').font = { size: 10, color: { argb: 'FF6B7280' } };
-    ws.getCell('A2').alignment = { horizontal: 'center' };
-
-    // ===== COLUMNAS =====
-        // ===== COLUMNAS (sin propiedad header, para no chocar con el título) =====
+    // ===== COLUMNAS (sin propiedad header, para no chocar con el título) =====
     const headerLabels: string[] = [
       { teacher: 'Docente', sede: 'Sede', area: 'Área', course: 'Curso' }[params.groupBy],
     ];
     const columnDefs: any[] = [{ key: 'label', width: 32 }];
 
     if (params.groupBy === 'teacher') {
-      headerLabels.push('DNI');
-      columnDefs.push({ key: 'dni', width: 12 });
+      headerLabels.push('DNI', 'Curso');
+      columnDefs.push(
+        { key: 'dni', width: 12 },
+        { key: 'course', width: 28 },
+      );
     }
     if (params.groupBy === 'course') {
       headerLabels.push('Área');
@@ -262,16 +272,33 @@ export class ReportsService {
       { key: 'attendanceRate', width: 12 },
     );
 
-    ws.columns = columnDefs; // ← Solo keys y anchos, SIN header
+    ws.columns = columnDefs;
 
-    // ===== ENCABEZADOS MANUALES EN LA FILA 3 =====
+    // ===== FILA 1: TÍTULO (merge dinámico) =====
+    ws.mergeCells(1, 1, 1, colCount);
+    const titleCell = ws.getCell('A1');
+    titleCell.value = `CONSOLIDADO DE ASISTENCIA DOCENTE ${groupLabel}`;
+    titleCell.font = { bold: true, size: 14 };
+    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    ws.getRow(1).height = 30;
+
+    // ===== FILA 2: SUBTÍTULO (merge dinámico) =====
+    ws.mergeCells(2, 1, 2, colCount);
+    const subtitleCell = ws.getCell('A2');
+    subtitleCell.value = `Período ${period.name} | ${modeLabel} | ${formatDate(start)} al ${formatDate(end)}`;
+    subtitleCell.font = { size: 10, color: { argb: 'FF6B7280' } };
+    subtitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    ws.getRow(2).height = 22;
+
+    // ===== FILA 3: ENCABEZADOS DE COLUMNAS =====
     const headerRow = ws.getRow(3);
     headerLabels.forEach((label, i) => {
-      headerRow.getCell(i + 1).value = label;
+      const cell = headerRow.getCell(i + 1);
+      cell.value = label;
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2563EB' } };
+      cell.alignment = { vertical: 'middle', horizontal: 'center' };
     });
-    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-    headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2563EB' } };
-    headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
     headerRow.height = 22;
 
     // ===== DATOS =====

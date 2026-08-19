@@ -17,6 +17,8 @@ const menu = [
   { path: '/reports', label: '📑 Consolidados' },
   { path: '/tools', label: '🧰 Herramientas' },
   { path: '/tools/compare', label: '🔀 Comparar Excel' },
+  { path: '/tools/schedule', label: '🗓️ Transformar Horario' },
+  { path: '/tools/cross', label: '🔗 Cruzar Horario' },
   { path: '/users', label: '👥 Usuarios' },
 ];
 

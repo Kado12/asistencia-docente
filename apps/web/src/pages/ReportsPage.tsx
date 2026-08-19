@@ -244,7 +244,10 @@ export const ReportsPage: React.FC = () => {
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{groupLabel}</th>
                   {params.groupBy === 'teacher' && (
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">DNI</th>
+                    <>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">DNI</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Curso</th>
+                    </>
                   )}
                   {params.groupBy === 'course' && (
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Área</th>
@@ -261,7 +264,10 @@ export const ReportsPage: React.FC = () => {
                   <tr key={r.key} className="hover:bg-gray-50">
                     <td className="px-4 py-3 text-sm font-medium text-gray-900">{r.label}</td>
                     {params.groupBy === 'teacher' && (
-                      <td className="px-4 py-3 text-sm text-gray-500">{r.dni}</td>
+                      <>
+                        <td className="px-4 py-3 text-sm text-gray-500">{r.dni}</td>
+                        <td className="px-4 py-3 text-sm text-gray-700">{r.course}</td>
+                      </>
                     )}
                     {params.groupBy === 'course' && (
                       <td className="px-4 py-3 text-sm text-gray-500">{r.area}</td>
@@ -289,7 +295,7 @@ export const ReportsPage: React.FC = () => {
                 ))}
                 {rows.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
+                    <td colSpan={params.groupBy === 'teacher' ? 9 : 8} className="px-4 py-8 text-center text-gray-500">
                       Sin datos para mostrar
                     </td>
                   </tr>

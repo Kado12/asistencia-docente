@@ -220,6 +220,7 @@ export class ImportsService {
           sedeId: sede.id,
           dayOfWeek: day,
           periodId: period.id,
+          classroomId: classroomId,
           blockId: blockId, // null compara contra null correctamente
         },
       });
